@@ -1,0 +1,6 @@
+{
+  "workspace.userThirdParty": "./lua_lsp_addons",
+  "diagnostics.groupSeverity": {
+    "luadoc": "Error"
+  },
+}
