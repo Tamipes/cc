@@ -45,10 +45,11 @@ function DownloadFile(_path, _override, _fileName, _url)
     DownloadComplete()
     return true
   else
-    term.write("TPD: Error during request to: ")
-    term.write(url)
-    term.write("\n    ")
-    print(err)
+    write("TPD: Error during request to: ")
+    write(url)
+    write("\n    ")
+    write(err)
+    write("\n")
   end
   return false
 end
