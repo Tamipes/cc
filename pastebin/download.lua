@@ -21,8 +21,8 @@ function DownloadComplete()
   end
 end
 
----Trys to download a file from a given path, uses multiple links.
---- If it cant find any that work, it returns false.
+---Tries to download a file from a given path, uses multiple links.
+---If it cant find any that work, it returns false.
 ---@param _path string
 ---@param _override boolean
 ---@param _fileName string
@@ -53,6 +53,8 @@ function DownloadFile(_path, _override, _fileName, _url)
   return false
 end
 
+-- Input[1] = Path
+-- Input[2] = Override(should it overwrite the file?)
 Input = { ... }
 if Input[2] ~= nil then
   local override = string.find(Input[2], "true")
@@ -71,7 +73,11 @@ Urls = { "https://computercraft.zomzi.moe/download/%s" }
 Link = settings.get("http_optimal_link", -1)
 
 if not (Link == -1) then
-  DownloadFile(Input[1], Override, Input[3], Link)
+  local success = DownloadFile(Input[1], Override, Input[3], Link)
+  if not success then
+      settings.set("http_optimal_link",-1)
+      settings.save(".settings")
+  end
 else
   for i = 1, #Urls do
     if (DownloadFile(Input[1], Override, Input[3], Urls[i])) then
