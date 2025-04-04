@@ -1,6 +1,19 @@
 {
   "workspace.userThirdParty": "./lua_lsp_addons",
-  "diagnostics.groupSeverity": {
-    "luadoc": "Error"
-  },
+  "diagnostics.severity": {
+    "param-type-mismatch": "Error",
+   "cast-type-mismatch": "Error",
+   "circle-doc-class": "Error",
+   "doc-field-no-class": "Error",
+   "duplicate-doc-alias": "Error",
+   "duplicate-doc-field": "Error",
+   "duplicate-doc-param": "Error",
+   "undefined-doc-class": "Error",
+   "undefined-doc-name": "Error",
+   "undefined-doc-param": "Error",
+   "unknown-cast-variable": "Error",
+   "unknown-diag-code": "Error",
+   "unknown-operator": "Error",
+   "undefined-global": "Error"
+  }
 }
