@@ -29,22 +29,25 @@ end
 ---@param _url string
 ---@return boolean
 function DownloadFile(_path, _override, _fileName, _url)
-  Url = string.format(_url, _path)
+  local url = string.format(_url, _path)
   if _fileName == nil then _fileName = GetFileInPath(_path) end
-  Request, err = http.get(Url)
-  if Request ~= nil and (Request.getResponseCode() == 200) then
+  local request, err = http.get(url)
+  if request ~= nil and (request.getResponseCode() == 200) then
     if _override and fs.exists(_fileName) then shell.run("delete", _fileName) end
     local file = fs.open(_fileName, "w")
     ---@diagnostic disable-next-line: need-check-nil
-    file.write(Request.readAll())
+    file.write(request.readAll())
     ---@diagnostic disable-next-line: need-check-nil
     file.close()
 
     --What to do if download succeded.
-    if DoLog then print('Downloaded: ' .. _fileName) end
+    if DoLog then print('TPD: Downloaded: ' .. _fileName) end
     DownloadComplete()
     return true
   else
+    term.write("TPD: Error during request to: ")
+    term.write(url)
+    term.write("\n    ")
     print(err)
   end
   return false
