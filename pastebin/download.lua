@@ -44,7 +44,7 @@ local function downloadFile(_path, _override, _fileName, _url)
   if _fileName == nil then _fileName = GetFilenameInPath(_path) end
   local request, err = http.get(url)
   if request ~= nil and (request.getResponseCode() == 200) then
-    if _override and fs.exists(_fileName) then shell.run("delete", _fileName) end
+    if _override and fs.exists(_fileName) then fs.delete(_fileName) end
     local file = fs.open(_fileName, "w")
     ---@diagnostic disable-next-line: need-check-nil
     file.write(request.readAll())
@@ -145,6 +145,11 @@ end
 -- Input[3]: string = filename
 -- Input[4]: int = num of retries
 local Input = { ... }
+if Input[1] == "update" then
+  Input[1] = "pastebin/download.lua"
+  Input[2] = "true"
+  Input[3] = ".tami/download.lua"
+end
 if Input[2] ~= nil then
   local override = string.find(Input[2], "true")
   if override then
@@ -167,7 +172,6 @@ if settings == nil then
     return
   end
 end
-
 DoLog = settings.get("logDownloads", true)
 
 Urls = { "https://static.tami.moe/computercraft/%s", "https://raw.githubusercontent.com/Tamipes/cc/refs/heads/main/%s" }
@@ -179,10 +183,10 @@ if not (successful) then
   if IsUrlAvailable("https://pastebin.com") then
     print("TPD: Download failed... updating from pastebin. (Use ctrl+T to terminate the script.)")
     sleep(5)
-    shell.run("pastebin", "get", "QzYCbZqL", "Tami/temp")
-    shell.run("delete", "Tami/download.lua")
-    shell.run("rename", "Tami/temp", "Tami/download.lua")
-    shell.run("Tami/download.lua", Input[1], Input[2], Input[3], Input[4])
+    shell.run("pastebin", "get", "QzYCbZqL", "temp/download.lua")
+    shell.run("delete", ".tami/download.lua")
+    shell.run("rename", ".tami/temp", ".tami/download.lua")
+    shell.run(".tami/download.lua", ...)
   else
     print("TPD: Download failed... and no pastebin...")
   end
