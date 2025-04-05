@@ -53,7 +53,7 @@ local function downloadFile(_path, _override, _fileName, _url)
 
     --What to do if download succeded.
     if DoLog then print('TPD: Downloaded: ' .. _fileName) end
-    downloadComplete()
+    -- downloadComplete()
     return true
   else
     write("TPD: Error during request to: ")
@@ -73,22 +73,29 @@ end
 function GetFile(_path, _override, _fileName)
   local downloaded = false
 
-  Link = settings.get("http_optimal_link", -1)
+  if settings == nil then
+    Link = -1
+  else
+    Link = settings.get("http_optimal_link", -1)
+  end
 
   if not (Link == -1) then
-    local success = downloadFile(_path, _override, _fileName, Link)
-    if not success then
+    downloaded = downloadFile(_path, _override, _fileName, Link)
+    if not downloaded then
       Link = -1
       if settings ~= nil then
         settings.set("http_optimal_link", -1)
         settings.save(".settings")
       end
+    else
+      return true
     end
   end
 
   if not (downloaded) then
     for i = 1, #Urls do
       if (downloadFile(_path, _override, _fileName, Urls[i])) then
+        downloaded = true
         Link = Urls[i]
         if settings ~= nil then
           settings.set("http_optimal_link", Urls[i])
@@ -115,6 +122,7 @@ function InitSettingsApi()
   local success = GetFile(string.format("cc_extensions/%s", settings_path),
     false, string.format("%s/%s", folder_cc, settings_path))
   if not success then
+    print(success)
     print("TPD: settings API: could not download settings api")
     return false
   end
@@ -156,6 +164,7 @@ end
 if settings == nil then
   if not InitSettingsApi() then
     print("TPD: Failed to init settings api!")
+    return
   end
 end
 
