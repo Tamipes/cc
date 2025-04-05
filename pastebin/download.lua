@@ -54,8 +54,9 @@ function DownloadFile(_path, _override, _fileName, _url)
   return false
 end
 
--- Input[1] = Path
--- Input[2] = Override(should it overwrite the file?)
+-- Input[1]: string = Path
+-- Input[2]: bool|nil = Override(should it overwrite the file?)
+-- Input[3]: int = Number of retries
 Input = { ... }
 if Input[2] ~= nil then
   local override = string.find(Input[2], "true")
@@ -65,12 +66,18 @@ if Input[2] ~= nil then
     Override = false
   end
 end
+if Input[3] ~= nil then
+  if Input[3] > 1 then
+    print("TPD: Enough of this chatter!(Exiting, too much retry)")
+    return
+  end
+end
 
 DoLog = settings.get("logDownloads", true)
 
 Downloaded = false
 
-Urls = { "https://computercraft.zomzi.moe/download/%s" }
+Urls = { "https://static.tami.moe/computercraft/%s" }
 Link = settings.get("http_optimal_link", -1)
 
 if not (Link == -1) then
@@ -92,6 +99,8 @@ end
 
 --Self update
 if not (Downloaded) then
+  print("Download failed... updating from pastebin. (Use ctrl+T to terminate the script.)")
+  sleep(5)
   shell.run("pastebin", "get", "QzYCbZqL", "Tami/temp")
   shell.run("delete", "Tami/download.lua")
   shell.run("rename", "Tami/temp", "Tami/download.lua")
