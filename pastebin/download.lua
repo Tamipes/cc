@@ -149,13 +149,7 @@ end
 -- Input[4]: int = num of retries
 local Input = { ... }
 if Input[1] == nil then
-  Input = {}
-  return {
-    GetFile = GetFile,
-    InitSettingsApi = InitSettingsApi,
-    IsUrlAvailable = IsUrlAvailable,
-    GetFilenameInPath = GetFilenameInPath
-  }
+  return
 end
 if Input[1] == "update" then
   Input[1] = "pastebin/download.lua"
