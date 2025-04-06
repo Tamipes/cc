@@ -30,18 +30,16 @@ function List()
   end
 end
 
----Installs the given package
----@param _pname string
-function Install(_pname)
-  if Registry.packages[_pname] == nil then
-    print("No package named: " .. _pname)
-    return
-  end
+--- Internal function to download the specified files
+--- @param _files Files
+--- @return boolean
+local function downloadFiles(_files)
+  local tempDir = "temp/" .. tostring(math.random(10000, 99999))
   local success = true
   ---@type {[string]: {upstream: string, fs: string}}
   local installed = {}
-  for key, value in pairs(Registry.packages[_pname].files) do
-    success = download.GetFile(value.upstream, true, value.fs) and success
+  for key, value in pairs(_files) do
+    success = download.GetFile(value.upstream, true, fs.combine(tempDir, value.fs)) and success
     if success then
       table.insert(installed, value)
     else
@@ -50,15 +48,33 @@ function Install(_pname)
   end
 
   if success then
+    for key, val in pairs(installed) do
+      if fs.exists(val.fs) then fs.delete(val.fs) end
+      fs.move(fs.combine(tempDir, val.fs), val.fs)
+    end
+  else
+    for key, value in pairs(installed) do
+      fs.delete(value.fs)
+    end
+  end
+  return success
+end
+
+---Installs the given package
+---@param _pname string
+function Install(_pname)
+  if Registry.packages[_pname] == nil then
+    print("No package named: " .. _pname)
+    return
+  end
+  local success = downloadFiles(Registry.packages[_pname].files)
+  if success then
     local lr = LoadLocalRegistry()
     if lr.packages == nil then lr.packages = {} end
     lr.packages[_pname] = Registry.packages[_pname]
     print("Sucessfully installed " .. _pname)
     SaveLocalRegistry(lr)
   else
-    for key, value in pairs(installed) do
-      fs.delete(value.fs)
-    end
     print("Failed to install " .. _pname)
   end
 end
@@ -66,15 +82,13 @@ end
 function UpdateAll()
   local lr = LoadLocalRegistry()
   for pname, package in pairs(lr.packages) do
-    local failed = false
-    for key, val in pairs(package.files) do
-      if not download.GetFile(val.upstream, true, val.fs) then
-        print("Failed to update: " .. pname)
-        failed = true
-        break
-      end
+    local success = false
+    success = downloadFiles(package.files)
+    if success then
+      print("Updated: " .. pname)
+    else
+      print("Failed to update: " .. pname)
     end
-    if not failed then print("Updated: "..pname) end
   end
 end
 
@@ -82,10 +96,11 @@ end
 ---@return Registry
 function LoadLocalRegistry()
   local file = fs.open(".tami/local_registry", "r")
-  local registry = {}
+  ---@type Registry
+  local registry = { packages = {} }
   if file then
-    registry = textutils.unserialise(file.readAll() --[[@as string]])
-    if registry == nil then registry = {} end
+    local reg = textutils.unserialise(file.readAll() --[[@as string]])
+    if reg ~= nil and reg.packages ~= nil then registry = reg end
     file.close()
   end
   return registry
@@ -96,6 +111,7 @@ end
 function SaveLocalRegistry(_lr)
   if fs.exists(".tami/local_registry") then fs.delete(".tami/local_registry") end
   local file = fs.open(".tami/local_registry", "w")
+  ---@cast file ccTweaked.fs.WriteHandle
   file.write(textutils.serialise(_lr))
   file.close()
 end
@@ -106,8 +122,11 @@ if not res or err ~= nil then
   print("Gurl: failed to fetch registry")
   return
 end
----@class Registry
----@field packages {[string]: {files: {[string]: {upstream : string, fs: string} }}}
+---@alias Registry { packages: {[string]: {files: Files}} }
+
+---@alias Files {[string]: {upstream : string, fs: string} }
+
+---@type Registry
 Registry = textutils.unserialise(res.readAll() --[[@as string]])
 
 
