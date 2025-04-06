@@ -18,7 +18,7 @@
     download = {
       files = {
         bin = {
-          upstream = "pastebin/download",
+          upstream = "pastebin/download.lua",
           fs = ".tami/bin/download"
         }
       }
