@@ -1,4 +1,0 @@
-{
-  http_optimal_link = "http://computercraft.zomzi.moe/%s",
-  [ "motd.enable" ] = false,
-}

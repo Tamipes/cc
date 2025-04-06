@@ -1,2 +1,0 @@
-shell.run("dance")
-

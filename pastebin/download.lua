@@ -1,3 +1,5 @@
+---@meta
+
 ---Get the file name and its extension from the path.
 ---@param _path string
 ---@return string
@@ -65,12 +67,13 @@ local function downloadFile(_path, _override, _fileName, _url)
   return false
 end
 
---- Downloads a file from the internally given urls
+--- Downloads a file from the internally defined urls
 ---@param _path string
 ---@param _override boolean
 ---@param _fileName string
 ---@return boolean
 function GetFile(_path, _override, _fileName)
+  Urls = { "https://static.tami.moe/computercraft/%s", "https://raw.githubusercontent.com/Tamipes/cc/refs/heads/main/%s" }
   local downloaded = false
 
   if settings == nil then
@@ -145,10 +148,28 @@ end
 -- Input[3]: string = filename
 -- Input[4]: int = num of retries
 local Input = { ... }
+if Input[1] == nil then
+  Input = {}
+  return {
+    GetFile = GetFile,
+    InitSettingsApi = InitSettingsApi,
+    IsUrlAvailable = IsUrlAvailable,
+    GetFilenameInPath = GetFilenameInPath
+  }
+end
 if Input[1] == "update" then
   Input[1] = "pastebin/download.lua"
   Input[2] = "true"
-  Input[3] = ".tami/download.lua"
+  Input[3] = shell.getRunningProgram()
+end
+if Input[1] == "bootstrap" then
+  if not GetFile("packages/bootstrap.lua", true, "/temp/bootstrap.lua") then
+    print("TPD: Could not get bootstrap.lua")
+    return
+  end
+
+  shell.run("/temp/bootstrap.lua", shell.getRunningProgram(), GetFilenameInPath(shell.getRunningProgram()))
+  return
 end
 if Input[2] ~= nil then
   local override = string.find(Input[2], "true")
@@ -174,13 +195,12 @@ if settings == nil then
 end
 DoLog = settings.get("logDownloads", true)
 
-Urls = { "https://static.tami.moe/computercraft/%s", "https://raw.githubusercontent.com/Tamipes/cc/refs/heads/main/%s" }
-
 local successful = GetFile(Input[1], Override, Input[3])
 
 --Self update if not downloading
 if not (successful) then
   if IsUrlAvailable("https://pastebin.com") then
+    -- make this into this:
     print("TPD: Download failed... updating from pastebin. (Use ctrl+T to terminate the script.)")
     sleep(5)
     shell.run("pastebin", "get", "QzYCbZqL", "temp/download.lua")

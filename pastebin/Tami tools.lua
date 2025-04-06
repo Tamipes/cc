@@ -1,1 +1,0 @@
-shell.run("pastebin","get","QzYCbZqL","Tami/download.lua")

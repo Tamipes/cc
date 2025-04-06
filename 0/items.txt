@@ -1,8 +1,0 @@
-{
-  {
-    {
-      name = "minecraft:oak_log",
-      quantity = 63,
-    },
-  },
-}
