@@ -26,14 +26,6 @@ local function getFolderPath(_path)
   return string.sub(_path, 1, #_path - #GetFilenameInPath(_path))
 end
 
-local function downloadComplete()
-  if fs.exists(".uninstall") then
-    local file = fs.open(".uninstall", "r")
-    ---@diagnostic disable-next-line: param-type-mismatch, need-check-nil
-    Programs = textutils.unserialise(file.readAll())
-  end
-end
-
 ---Tries to download a file from a given path, uses multiple links.
 ---If it cant find any that work, it returns false.
 ---@param _path string
@@ -42,29 +34,46 @@ end
 ---@param _url string
 ---@return boolean
 local function downloadFile(_path, _override, _fileName, _url)
-  local url = string.format(_url, _path)
-  if _fileName == nil then _fileName = GetFilenameInPath(_path) end
-  local request, err = http.get(url)
-  if request ~= nil and (request.getResponseCode() == 200) then
-    if _override and fs.exists(_fileName) then fs.delete(_fileName) end
-    local file = fs.open(_fileName, "w")
-    ---@diagnostic disable-next-line: need-check-nil
-    file.write(request.readAll())
-    ---@diagnostic disable-next-line: need-check-nil
-    file.close()
+end
 
-    --What to do if download succeded.
-    if DoLog then print('TPD: Downloaded: ' .. _fileName) end
-    -- downloadComplete()
-    return true
+--- Downloads a file from the internally defined urls
+---@param _path string
+---@return string|nil
+function GetAsString(_path)
+  Urls = { "https://static.tami.moe/computercraft/%s", "https://raw.githubusercontent.com/Tamipes/cc/refs/heads/main/%s" }
+  if settings == nil then
+    Link = -1
   else
-    write("TPD: Error during request to: ")
-    write(url)
-    write("\n    ")
-    write(err)
-    write("\n")
+    Link = settings.get("http_optimal_link", -1)
   end
-  return false
+
+  if Link ~= -1 then
+    local request, err = http.get(string.format(Link, _path))
+    if request ~= nil and (request.getResponseCode() == 200) then
+      return request.readAll() --[[@as string]]
+    else
+      if DoLog then print("TPD: Failed to download: " .. string.format(Link, _path)) end
+      Link = -1
+      if settings ~= nil then
+        settings.set("http_optimal_link", -1)
+        settings.save(".settings")
+      end
+    end
+  end
+
+  for i = 1, #Urls do
+    local request, err = http.get(string.format(Urls[i], _path))
+    if request ~= nil and (request.getResponseCode() == 200) then
+      Link = Urls[i]
+      if settings ~= nil then
+        settings.set("http_optimal_link", Urls[i])
+        settings.save(".settings")
+      end
+      return request.readAll()
+    end
+    if DoLog then print("TPD: Failed to download: " .. string.format(Urls[i], _path)) end
+  end
+  return nil
 end
 
 --- Downloads a file from the internally defined urls
@@ -73,42 +82,21 @@ end
 ---@param _fileName string
 ---@return boolean
 function GetFile(_path, _override, _fileName)
-  Urls = { "https://static.tami.moe/computercraft/%s", "https://raw.githubusercontent.com/Tamipes/cc/refs/heads/main/%s" }
-  local downloaded = false
+  if _fileName == nil then _fileName = GetFilenameInPath(_path) end
+  local request = GetAsString(_path)
+  if request ~= nil then
+    if _override and fs.exists(_fileName) then fs.delete(_fileName) end
+    if fs.exists(_fileName) then return false end
 
-  if settings == nil then
-    Link = -1
-  else
-    Link = settings.get("http_optimal_link", -1)
-  end
+    local file = fs.open(_fileName, "w")
+    ---@cast file ccTweaked.fs.WriteHandle
+    file.write(request)
+    file.close()
 
-  if not (Link == -1) then
-    downloaded = downloadFile(_path, _override, _fileName, Link)
-    if not downloaded then
-      Link = -1
-      if settings ~= nil then
-        settings.set("http_optimal_link", -1)
-        settings.save(".settings")
-      end
-    else
-      return true
-    end
+    if DoLog then print('TPD: Downloaded: ' .. _fileName) end
+    return true
   end
-
-  if not (downloaded) then
-    for i = 1, #Urls do
-      if (downloadFile(_path, _override, _fileName, Urls[i])) then
-        downloaded = true
-        Link = Urls[i]
-        if settings ~= nil then
-          settings.set("http_optimal_link", Urls[i])
-          settings.save(".settings")
-        end
-        break
-      end
-    end
-  end
-  return downloaded
+  return false
 end
 
 -- Init settings api, and if it is not present, then download it as well
