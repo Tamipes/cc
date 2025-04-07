@@ -9,6 +9,8 @@ function PrintUsage()
   print("     - Installs a package")
   print("   update<PACKAGE_NAME>")
   print("     - Updates all packages")
+  print("   del<PACKAGE_NAME>")
+  print("     - Updates all packages")
 end
 
 -- Lists the packages
@@ -17,14 +19,14 @@ function List()
   for key, value in pairs(Registry.packages) do
     if lr.packages[key] ~= nil then
       term.setTextColor(colors.green)
-      term.write("Installed   -  ")
+      term.write("Installed ")
       term.setTextColor(colors.white)
     else
       term.setTextColor(colors.gray)
-      term.write("unavailable -  ")
+      term.write("available ")
       term.setTextColor(colors.white)
     end
-    term.write(key)
+    term.write(" - " .. key)
     local x, y = term.getCursorPos()
     term.setCursorPos(1, y + 1)
   end
@@ -57,6 +59,7 @@ local function downloadFiles(_files)
       fs.delete(value.fs)
     end
   end
+  fs.delete(tempDir)
   return success
 end
 
@@ -76,6 +79,23 @@ function Install(_pname)
     SaveLocalRegistry(lr)
   else
     print("Failed to install " .. _pname)
+  end
+end
+
+---Deletes the given package
+---@param _pname string
+function Delete(_pname)
+  local lr = LoadLocalRegistry()
+  if lr.packages[_pname] ~= nil then
+    package = lr.packages[_pname]
+    for key, val in pairs(package.files) do
+      fs.delete(val.fs)
+    end
+    lr.packages[_pname] = nil
+    SaveLocalRegistry(lr)
+    print("Package successfully deleted!")
+  else
+    print("Package \"" .. _pname .. "\" not found.")
   end
 end
 
@@ -138,6 +158,8 @@ elseif Input[1] == "install" then
   Install(Input[2])
 elseif Input[1] == "update" then
   UpdateAll()
+elseif Input[1] == "del" then
+  Delete(Input[2])
 else
   PrintUsage()
 end
