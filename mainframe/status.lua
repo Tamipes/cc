@@ -6,11 +6,16 @@ local function main()
   monitor.setBackgroundColor(colors.black)
   monitor.clear()
 
+  me_system = peripheral.wrap("mekanism_machine_1")
+
   DrawLineVertical(monitor, 24, 1, 19)
   while true do
-    drawReactors(monitor)
+    local num = drawReactors(monitor)
+    num = num + (me_system.getMaxEnergyStored() / 2)
     monitor.setTextColor(colors.green)
-    monitor.setBackgroundColor(colors.green)
+    monitor.setBackgroundColor(colors.black)
+    monitor.setCursorPos(30, 10)
+    monitor.write(tostring(num))
     sleep(0.1)
   end
 end
@@ -19,13 +24,21 @@ end
 function drawReactors(_term)
   local start_x = 25
   local reactors = { "BigReactors-Turbine_1", "BigReactors-Turbine_2" }
+  local generated = 0
   for i, reactor_name in pairs(reactors) do
     local reactor = peripheral.wrap(reactor_name)
+    ---@cast reactor {}
+
+    ---@diagnostic disable-next-line: undefined-field
     local p = reactor.getEnergyStored() / 1000000
     p = p + 0.02
-    local generating = math.floor(reactor.getEnergyProducedLastTick() / 1000)
+    ---@diagnostic disable-next-line: undefined-field
+    local produced = reactor.getEnergyProducedLastTick()
+    local generating = math.floor(produced / 1000)
+    generated = produced + generated
     drawReactor(_term, start_x + 4 * i, 1, p, tostring(generating))
   end
+  return generated
 end
 
 FillText = "x"

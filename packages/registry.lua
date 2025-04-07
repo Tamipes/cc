@@ -36,6 +36,10 @@
         bin = {
           upstream = "packages/gurl.lua",
           fs = ".tami/bin/gurl"
+        },
+        startup = {
+          upstream = "packages/gurl_startup.lua",
+          fs = ".tami/startups/gurl.lua"
         }
       }
     }

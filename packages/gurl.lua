@@ -1,4 +1,7 @@
 -- local download = require "pastebin.download"
+---@alias Registry { packages: {[string]: {files: Files}} }
+---@alias Files {[string]: {upstream : string, fs: string} }
+
 local Input = { ... }
 
 function PrintUsage()
@@ -15,7 +18,7 @@ end
 
 -- Lists the packages
 function List()
-  local lr = LoadLocalRegistry()
+  local lr = LoadLocalDatabase()
   for key, value in pairs(Registry.packages) do
     if lr.packages[key] ~= nil then
       term.setTextColor(colors.green)
@@ -34,8 +37,9 @@ end
 
 --- Internal function to download the specified files
 --- @param _files Files
+--- @param _old_files Files|nil
 --- @return boolean
-local function downloadFiles(_files)
+local function downloadFiles(_files, _old_files)
   local tempDir = "temp/" .. tostring(math.random(10000, 99999))
   local success = true
   ---@type {[string]: {upstream: string, fs: string}}
@@ -50,6 +54,11 @@ local function downloadFiles(_files)
   end
 
   if success then
+    if _old_files ~= nil then
+      for key, val in pairs(_old_files) do
+        fs.delete(val.fs)
+      end
+    end
     for key, val in pairs(installed) do
       if fs.exists(val.fs) then fs.delete(val.fs) end
       fs.move(fs.combine(tempDir, val.fs), val.fs)
@@ -72,11 +81,11 @@ function Install(_pname)
   end
   local success = downloadFiles(Registry.packages[_pname].files)
   if success then
-    local lr = LoadLocalRegistry()
+    local lr = LoadLocalDatabase()
     if lr.packages == nil then lr.packages = {} end
     lr.packages[_pname] = Registry.packages[_pname]
     print("Sucessfully installed " .. _pname)
-    SaveLocalRegistry(lr)
+    SaveLocalDatabase(lr)
   else
     print("Failed to install " .. _pname)
   end
@@ -85,22 +94,22 @@ end
 ---Deletes the given package
 ---@param _pname string
 function Delete(_pname)
-  local lr = LoadLocalRegistry()
+  local lr = LoadLocalDatabase()
   if lr.packages[_pname] ~= nil then
     package = lr.packages[_pname]
     for key, val in pairs(package.files) do
       fs.delete(val.fs)
     end
     lr.packages[_pname] = nil
-    SaveLocalRegistry(lr)
+    SaveLocalDatabase(lr)
     print("Package successfully deleted!")
   else
     print("Package \"" .. _pname .. "\" not found.")
   end
 end
 
-function UpdateAll()
-  local lr = LoadLocalRegistry()
+function Upgrade()
+  local lr = LoadLocalDatabase()
   for pname, package in pairs(lr.packages) do
     local success = false
     success = downloadFiles(package.files)
@@ -114,8 +123,8 @@ end
 
 ---Loads in the registry
 ---@return Registry
-function LoadLocalRegistry()
-  local file = fs.open(".tami/local_registry", "r")
+function LoadLocalDatabase()
+  local file = fs.open(".tami/local_database", "r")
   ---@type Registry
   local registry = { packages = {} }
   if file then
@@ -128,26 +137,37 @@ end
 
 ---Loads in the registry
 ---@param _lr Registry
-function SaveLocalRegistry(_lr)
-  if fs.exists(".tami/local_registry") then fs.delete(".tami/local_registry") end
-  local file = fs.open(".tami/local_registry", "w")
-  ---@cast file ccTweaked.fs.WriteHandle
+function SaveLocalDatabase(_lr)
+  if fs.exists(".tami/local_database") then fs.delete(".tami/local_database") end
+  local file = fs.open(".tami/local_database", "w") --[[@as ccTweaked.fs.WriteHandle]]
   file.write(textutils.serialise(_lr))
   file.close()
 end
 
-res, err = http.get("https://static.tami.moe/computercraft/packages/registry.lua")
-if not res or err ~= nil then
-  print("Gurl: Err:  " .. err)
-  print("Gurl: failed to fetch registry")
-  return
+function UpdateLocalRegistry()
+  local str = download.GetAsString("packages/registry.lua")
+  if str == nil then
+    print("Error updating registry!")
+    return false
+  end
+  Registry = textutils.unserialise(str --[[@as string]])
+  if fs.exists(".tami/local_registry") then fs.delete(".tami/local_registry") end
+  local file = fs.open(".tami/local_registry", "w") --[[@as ccTweaked.fs.WriteHandle]]
+  file.write(str)
+  file.close()
+  print("Updated the registry!")
+  return true
 end
----@alias Registry { packages: {[string]: {files: Files}} }
 
----@alias Files {[string]: {upstream : string, fs: string} }
+if fs.exists(".tami/local_registry") then
+  local file = fs.open(".tami/local_registry", "r") --[[@as ccTweaked.fs.ReadHandle]]
 
----@type Registry
-Registry = textutils.unserialise(res.readAll() --[[@as string]])
+  ---@type Registry
+  ---@diagnostic disable-next-line: assign-type-mismatch
+  Registry = textutils.unserialise(file.readAll() --[[@as string]])
+else
+  if not UpdateLocalRegistry() then return end
+end
 
 
 if Input == nil then
@@ -156,8 +176,10 @@ elseif Input[1] == "ls" then
   List()
 elseif Input[1] == "install" then
   Install(Input[2])
+elseif Input[1] == "upgrade" then
+  Upgrade()
 elseif Input[1] == "update" then
-  UpdateAll()
+  UpdateLocalRegistry()
 elseif Input[1] == "del" then
   Delete(Input[2])
 else

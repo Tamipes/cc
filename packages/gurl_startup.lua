@@ -1,24 +1,13 @@
-print("I am up!")
-if not os.loadAPI(".tami/bin/download") then print("startup: Failed to load download api") end
-download.InitSettingsApi()
-
-shell.setPath(shell.path() .. ":.tami/bin/")
-
-if fs.exists(".tami/startups/") then
-  local files = fs.list(".tami/startups/")
-  for i = 1 ,#files do
-    shell.run(files[i])
-  end
-end
-
-local download_parameters = {
-  ["bootstrap"] = {},
+local gurl_parameters = {
+  ["ls"] = {},
+  ["install"] = {},
   ["update"] = {},
+  ["del"] = {},
 }
 
 local function tabCompletionFunction(shell, parNumber, curText, lastText)
   -- Check that the parameters entered so far are valid:
-  local curParam = download_parameters
+  local curParam = gurl_parameters
   for i = 2, #lastText do
     if curParam[lastText[i] .. " "] then
       curParam = curParam[lastText[i] .. " "]
@@ -36,4 +25,4 @@ local function tabCompletionFunction(shell, parNumber, curText, lastText)
   end
   return results
 end
-shell.setCompletionFunction(".tami/bin/download", tabCompletionFunction)
+shell.setCompletionFunction(".tami/bin/gurl", tabCompletionFunction)
