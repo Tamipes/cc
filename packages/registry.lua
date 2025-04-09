@@ -1,8 +1,7 @@
 {
   packages = {
-    core = {
+    settings_api = {
       dependencies = {
-        "download"
       },
       files = {
         settings_api = {
@@ -16,6 +15,9 @@
       }
     },
     download = {
+      dependencies = {
+        "settings_api"
+      },
       files = {
         bin = {
           upstream = "pastebin/download.lua",
@@ -32,6 +34,9 @@
       }
     },
     gurl = {
+      dependencies = {
+        "download"
+      },
       files = {
         bin = {
           upstream = "packages/gurl.lua",

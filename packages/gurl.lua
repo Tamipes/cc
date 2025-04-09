@@ -1,5 +1,6 @@
 -- local download = require "pastebin.download"
----@alias Registry { packages: {[string]: {files: Files}} }
+---@alias Registry { packages: {[string]: Package} }
+---@alias Package  {files: Files, dependencies: [string]}
 ---@alias Files {[string]: {upstream : string, fs: string} }
 
 local Input = { ... }
@@ -10,10 +11,12 @@ function PrintUsage()
   print("     - Lists the available packages")
   print("   install <PACKAGE_NAME>")
   print("     - Installs a package")
-  print("   update<PACKAGE_NAME>")
-  print("     - Updates all packages")
-  print("   del<PACKAGE_NAME>")
-  print("     - Updates all packages")
+  print("   update")
+  print("     - Updates the local regisgtry")
+  print("   upgrade")
+  print("     - Upgrade all packages")
+  print("   del <PACKAGE_NAME>")
+  print("     - Deletes a package")
 end
 
 -- Lists the packages
@@ -44,10 +47,10 @@ local function downloadFiles(_files, _old_files)
   local success = true
   ---@type {[string]: {upstream: string, fs: string}}
   local installed = {}
-  for key, value in pairs(_files) do
-    success = download.GetFile(value.upstream, true, fs.combine(tempDir, value.fs)) and success
+  for fname, file in pairs(_files) do
+    success = download.GetFile(file.upstream, true, fs.combine(tempDir, file.fs)) and success
     if success then
-      table.insert(installed, value)
+      table.insert(installed, file)
     else
       break
     end
@@ -74,10 +77,20 @@ end
 
 ---Installs the given package
 ---@param _pname string
+---@return boolean
 function Install(_pname)
-  if Registry.packages[_pname] == nil then
+  ---@type Package
+  local package = Registry.packages[_pname]
+  if package == nil then
     print("No package named: " .. _pname)
-    return
+    return false
+  end
+
+  for i = 1, #package.dependencies do
+    if not Install(package.dependencies[i]) then
+      print("Failed to resolve dependency for: " .. _pname)
+      return false
+    end
   end
   local success = downloadFiles(Registry.packages[_pname].files)
   if success then
@@ -89,32 +102,55 @@ function Install(_pname)
   else
     print("Failed to install " .. _pname)
   end
+  return true
 end
 
 ---Deletes the given package
 ---@param _pname string
+---@return boolean
 function Delete(_pname)
-  local lr = LoadLocalDatabase()
-  if lr.packages[_pname] ~= nil then
-    package = lr.packages[_pname]
-    for key, val in pairs(package.files) do
-      fs.delete(val.fs)
-    end
-    lr.packages[_pname] = nil
-    SaveLocalDatabase(lr)
-    print("Package successfully deleted!")
-  else
+  local ldb = LoadLocalDatabase()
+  local package = ldb.packages[_pname]
+  if package == nil then
     print("Package \"" .. _pname .. "\" not found.")
+    return false
   end
+  ---@cast package Package
+
+  local deps = {}
+  for pname, pack in pairs(ldb.packages) do
+    if pack.dependencies ~= nil then
+      for i = 1, #pack.dependencies do
+        if pack.dependencies[i] == _pname then table.insert(deps, pname) end
+      end
+    end
+  end
+
+  if #deps ~= 0 then
+    print("This package cannot be deleted, cuz it has dependencies: ")
+    for i = 1, #deps do
+      print("  - " .. deps[i])
+    end
+    return false
+  end
+
+  for key, val in pairs(package.files) do
+    fs.delete(val.fs)
+  end
+  ldb.packages[_pname] = nil
+  SaveLocalDatabase(ldb)
+  print("Package successfully deleted!")
+  return true
 end
 
 function Upgrade()
-  local lr = LoadLocalDatabase()
-  for pname, package in pairs(lr.packages) do
+  local ldb = LoadLocalDatabase()
+  for pname, package in pairs(ldb.packages) do
     local success = false
-    success = downloadFiles(package.files)
+    success = downloadFiles(Registry.packages[pname].files, package.files)
     if success then
       print("Updated: " .. pname)
+      ldb.packages[pname] = Registry.packages[pname]
     else
       print("Failed to update: " .. pname)
     end
