@@ -22,6 +22,10 @@
         bin = {
           upstream = "pastebin/download.lua",
           fs = ".tami/bin/download"
+        },
+        comp = {
+          upstream = "pastebin/download_comp.lua",
+          fs = ".tami/startups/download.lua"
         }
       }
     },
@@ -30,6 +34,14 @@
         bin = {
           upstream = "mainframe/status.lua",
           fs = ".tami/bin/status"
+        }
+      }
+    },
+    core = {
+      files = {
+        startup = {
+          upstream = "packages/startup.lua",
+          fs = ".tami/startup.lua"
         }
       }
     },

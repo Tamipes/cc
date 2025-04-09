@@ -15,15 +15,15 @@ if Input[1] ~= ".tami/bin/download" then
   fs.delete(shell.getRunningProgram())
 end
 
-success = download.GetFile("packages/startup.lua",true,"startup")
+success = download.GetFile("packages/root_startup.lua",true,"startup")
 if not success then
-  print("TPD: Failed to download startup.lua")
+  print("TPD: Failed to download root_startup.lua")
   return
 end
 
 success = download.GetFile("packages/gurl.lua",true,".tami/bin/gurl")
 if not success then
-  print("TPD: Failed to download startup.lua")
+  print("TPD: Failed to download gurl.lua")
   return
 end
 
