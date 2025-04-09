@@ -1,7 +1,7 @@
 {
   "workspace.userThirdParty": "./lua_lsp_addons",
   "diagnostics.severity": {
-    "param-type-mismatch": "Error",
+   "param-type-mismatch": "Error",
    "cast-type-mismatch": "Error",
    "circle-doc-class": "Error",
    "doc-field-no-class": "Error",

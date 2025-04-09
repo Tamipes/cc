@@ -8,7 +8,7 @@ shell.setPath(shell.path() .. ":.tami/bin/")
 
 if fs.exists(".tami/startups/") then
   local files = fs.list(".tami/startups/")
-  for i = 1 ,#files do
-    shell.run(files[i])
+  for i = 1, #files do
+    shell.run(".tami/startups/" .. files[i])
   end
 end

@@ -86,12 +86,15 @@ function Install(_pname)
     return false
   end
 
-  for i = 1, #package.dependencies do
-    if not Install(package.dependencies[i]) then
-      print("Failed to resolve dependency for: " .. _pname)
-      return false
+  if package.dependencies ~= nil then
+    for i = 1, #package.dependencies do
+      if not Install(package.dependencies[i]) then
+        print("Failed to resolve dependency for: " .. _pname)
+        return false
+      end
     end
   end
+
   local success = downloadFiles(Registry.packages[_pname].files)
   if success then
     local lr = LoadLocalDatabase()
