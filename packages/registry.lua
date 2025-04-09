@@ -11,6 +11,10 @@
         expect_module = {
           upstream = "cc_extensions/modules/main/cc/expect.lua",
           fs = ".tami/cc/modules/main/cc/expect.lua"
+        },
+        startup = {
+          upstream = "cc_extensions/settings_startup.lua",
+          fs = ".tami/startups/settings_api.lua"
         }
       }
     },
