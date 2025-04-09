@@ -34,7 +34,7 @@ function List()
     end
     term.write(" - " .. key)
     local x, y = term.getCursorPos()
-    term.setCursorPos(1, y + 1)
+    print()
   end
 end
 
