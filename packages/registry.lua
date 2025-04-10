@@ -49,6 +49,14 @@
         }
       }
     },
+    astar_lib = {
+      files = {
+        startup = {
+          upstream = "lib/astar.lua",
+          fs = ".tami/lib/astar"
+        }
+      }
+    },
     gurl = {
       dependencies = {
         "download"
