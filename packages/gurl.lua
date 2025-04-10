@@ -13,8 +13,9 @@ function PrintUsage()
   print("     - Installs a package")
   print("   update")
   print("     - Updates the local regisgtry")
-  print("   upgrade")
-  print("     - Upgrade all packages")
+  print("   upgrade <PACKAGE_NAME>")
+  print("     - Upgrades a package")
+  print("     - If no package name given, updates all")
   print("   del <PACKAGE_NAME>")
   print("     - Deletes a package")
 end
@@ -146,17 +147,34 @@ function Delete(_pname)
   return true
 end
 
-function Upgrade()
+function UpgradeAll()
   local ldb = LoadLocalDatabase()
   for pname, package in pairs(ldb.packages) do
     local success = false
     success = downloadFiles(Registry.packages[pname].files, package.files)
     if success then
-      print("Updated: " .. pname)
+      print("Upgraded: " .. pname)
       ldb.packages[pname] = Registry.packages[pname]
     else
-      print("Failed to update: " .. pname)
+      print("Failed to upgrade: " .. pname)
     end
+  end
+end
+
+function Upgrade(_pname)
+  local success = false
+  local ldb = LoadLocalDatabase()
+  local package = ldb.packages[_pname]
+  if package == nil then
+    print("No package named: " .. _pname)
+    return false
+  end
+  success = downloadFiles(Registry.packages[_pname].files, package.files)
+  if success then
+    print("Upgraded: " .. _pname)
+    ldb.packages[_pname] = Registry.packages[_pname]
+  else
+    print("Failed to upgrade: " .. _pname)
   end
 end
 
@@ -216,7 +234,11 @@ elseif Input[1] == "ls" then
 elseif Input[1] == "install" then
   Install(Input[2])
 elseif Input[1] == "upgrade" then
-  Upgrade()
+  if Input[2] ~= nil then
+    Upgrade(Input[2])
+  else
+    UpgradeAll()
+  end
 elseif Input[1] == "update" then
   UpdateLocalRegistry()
 elseif Input[1] == "del" then
