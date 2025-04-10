@@ -6,34 +6,69 @@ local function main()
   monitor.setBackgroundColor(colors.black)
   monitor.clear()
 
-  me_system = peripheral.wrap("mekanism_machine_1")
 
+  monitor.setTextColor(colors.pink)
+  monitor.setBackgroundColor(colors.pink)
   DrawLineVertical(monitor, 24, 1, 19)
   while true do
-    local num = drawReactors(monitor)
-    num = num + (me_system.getMaxEnergyStored() / 2)
+    drawReactors(monitor)
     monitor.setTextColor(colors.green)
     monitor.setBackgroundColor(colors.black)
     monitor.setCursorPos(30, 10)
-    monitor.write(tostring(num))
+    monitor.write(tostring(Data.sum))
     sleep(0.1)
   end
 end
 
+function updateData()
+  while true do
+    local reactors = { "BigReactors-Turbine_1", "BigReactors-Turbine_2" }
+    local ener_sum = 0
+    for i, reactor_name in pairs(reactors) do
+      local reactor = peripheral.wrap(reactor_name)
+      ---@cast reactor table
+
+      ---@diagnostic disable-next-line: undefined-field
+      Data.reactors[i] = {}
+      Data.reactors[i].energyStored = reactor.getEnergyStored()
+      ---@diagnostic disable-next-line: undefined-field
+      Data.reactors[i].energyProducedLastTick = reactor.getEnergyProducedLastTick()
+      ener_sum = ener_sum + Data.reactors[i].energyProducedLastTick
+    end
+
+    Data.sum = ener_sum - Data.me_energy
+    sleep(0.1)
+  end
+end
+
+-- function sloowDataUpdate()
+--   while true do
+--     local me_system = peripheral.wrap("mekanism_machine_1")
+--     ---@cast me_system table
+
+--     ---@diagnostic disable-next-line: undefined-field
+--     Data.me_energy = me_system.getMaxEnergyStored() / 2
+--     local ener_sum = 0
+--     for i, val in pairs(Data.reactors) do
+--       ener_sum = ener_sum + val.energyProducedLastTick
+--     end
+--     ener_sum = ener_sum - Data.me_energy
+--     Data.sum = ener_sum
+--     sleep(5)
+--   end
+-- end
+
+Data = { reactors = {}, me_energy = 0, sum = 0 }
 ---@param _term ccTweaked.peripherals.Monitor
+---@return integer
 function drawReactors(_term)
   local start_x = 25
-  local reactors = { "BigReactors-Turbine_1", "BigReactors-Turbine_2" }
   local generated = 0
-  for i, reactor_name in pairs(reactors) do
-    local reactor = peripheral.wrap(reactor_name)
-    ---@cast reactor {}
-
-    ---@diagnostic disable-next-line: undefined-field
-    local p = reactor.getEnergyStored() / 1000000
+  if Data.reactors == nil then return 0 end
+  for i, val in pairs(Data.reactors) do
+    local p = val.energyStored / 1000000
     p = p + 0.02
-    ---@diagnostic disable-next-line: undefined-field
-    local produced = reactor.getEnergyProducedLastTick()
+    local produced = val.energyProducedLastTick
     local generating = math.floor(produced / 1000)
     generated = produced + generated
     drawReactor(_term, start_x + 4 * i, 1, p, tostring(generating))
@@ -122,4 +157,5 @@ function drawReactor(_term, _x, _y, _p, _gen)
   end
 end
 
-main()
+parallel.waitForAny(main, updateData)
+print("Info: Program did not crash *fully*!")
