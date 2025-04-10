@@ -2,6 +2,7 @@ local gurl_parameters = {
   ["ls"] = {},
   ["install"] = {},
   ["update"] = {},
+  ["upgrade"] = {},
   ["del"] = {},
 }
 
