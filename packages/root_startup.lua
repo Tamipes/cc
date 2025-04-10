@@ -1,1 +1,1 @@
-shell.run(".tami/startup.lua")
+shell.run(".tami/boot.lua")

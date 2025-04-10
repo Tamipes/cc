@@ -44,8 +44,8 @@
     core = {
       files = {
         startup = {
-          upstream = "packages/startup.lua",
-          fs = ".tami/startup.lua"
+          upstream = "packages/boot.lua",
+          fs = ".tami/boot.lua"
         }
       }
     },
