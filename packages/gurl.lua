@@ -47,29 +47,31 @@ local function downloadFiles(_files, _old_files)
   local tempDir = "temp/" .. tostring(math.random(10000, 99999))
   local success = true
   ---@type {[string]: {upstream: string, fs: string}}
-  local installed = {}
+  local install_temp = {}
   for fname, file in pairs(_files) do
     success = download.GetFile(file.upstream, true, fs.combine(tempDir, file.fs)) and success
     if success then
-      table.insert(installed, file)
+      table.insert(install_temp, file)
     else
       break
     end
   end
 
   if success then
+    -- Delete the old package files; These may differ from the new ones, if the package definition changed
     if _old_files ~= nil then
       for key, val in pairs(_old_files) do
-        fs.delete(val.fs)
+        Root:delete(val.fs)
       end
     end
-    for key, val in pairs(installed) do
-      if fs.exists(val.fs) then fs.delete(val.fs) end
-      fs.move(fs.combine(tempDir, val.fs), val.fs)
+    -- Install the files from the temp dir to the actual definitions
+    for key, val in pairs(install_temp) do
+      if Root:exists(val.fs) then Root:delete(val.fs) end
+      fs.move(fs.combine(tempDir, val.fs), Root:combine(val.fs))
     end
   else
-    for key, value in pairs(installed) do
-      fs.delete(value.fs)
+    for key, value in pairs(install_temp) do
+      Root:delete(value.fs)
     end
   end
   fs.delete(tempDir)
@@ -131,7 +133,7 @@ function Delete(_pname)
   end
 
   if #deps ~= 0 then
-    print("This package cannot be deleted, cuz it has dependencies: ")
+    print("This package cannot be deleted, cuz it has dependents: ")
     for i = 1, #deps do
       print("  - " .. deps[i])
     end
@@ -139,7 +141,7 @@ function Delete(_pname)
   end
 
   for key, val in pairs(package.files) do
-    fs.delete(val.fs)
+    Root:delete(val.fs)
   end
   ldb.packages[_pname] = nil
   SaveLocalDatabase(ldb)
@@ -181,7 +183,7 @@ end
 ---Loads in the registry
 ---@return Registry
 function LoadLocalDatabase()
-  local file = fs.open(".tami/local_database", "r")
+  local file = Root:open(".tami/local_database", "r")
   ---@type Registry
   local registry = { packages = {} }
   if file then
@@ -195,8 +197,8 @@ end
 ---Loads in the registry
 ---@param _lr Registry
 function SaveLocalDatabase(_lr)
-  if fs.exists(".tami/local_database") then fs.delete(".tami/local_database") end
-  local file = fs.open(".tami/local_database", "w") --[[@as ccTweaked.fs.WriteHandle]]
+  if Root:exists(".tami/local_database") then Root:delete(".tami/local_database") end
+  local file = Root:open(".tami/local_database", "w") --[[@as ccTweaked.fs.WriteHandle]]
   file.write(textutils.serialise(_lr))
   file.close()
 end
@@ -208,16 +210,52 @@ function UpdateLocalRegistry()
     return false
   end
   Registry = textutils.unserialise(str --[[@as string]])
-  if fs.exists(".tami/local_registry") then fs.delete(".tami/local_registry") end
-  local file = fs.open(".tami/local_registry", "w") --[[@as ccTweaked.fs.WriteHandle]]
+  if Root:exists(".tami/local_registry") then Root:delete(".tami/local_registry") end
+  local file = Root:open(".tami/local_registry", "w") --[[@as ccTweaked.fs.WriteHandle]]
   file.write(str)
   file.close()
   print("Updated the registry!")
   return true
 end
 
-if fs.exists(".tami/local_registry") then
-  local file = fs.open(".tami/local_registry", "r") --[[@as ccTweaked.fs.ReadHandle]]
+RootFS = {}
+RootFS.__index = RootFS
+
+function RootFS.new(path)
+  local self = setmetatable({}, RootFS)
+  self.path = path
+  return self
+end
+
+function RootFS:exists(path)
+  return fs.exists(fs.combine(self.path, path))
+end
+
+function RootFS:delete(path)
+  return fs.delete(fs.combine(self.path, path))
+end
+
+function RootFS:open(path, mode)
+  return fs.open(fs.combine(self.path, path), mode)
+end
+
+function RootFS:combine(path)
+  return fs.combine(self.path, path)
+end
+
+for i = 1, #Input do
+  if Input[i] == "-r" or Input[i] == "--root" then
+    Root = RootFS.new(Input[i + 1])
+    table.remove(Input, i)
+    table.remove(Input, i)
+  end
+end
+if Root == nil then
+  Root = RootFS.new("/")
+end
+
+if Root:exists(".tami/local_registry") then
+  local file = Root:open(".tami/local_registry", "r") --[[@as ccTweaked.fs.ReadHandle]]
 
   ---@type Registry
   ---@diagnostic disable-next-line: assign-type-mismatch
@@ -246,3 +284,4 @@ elseif Input[1] == "del" then
 else
   PrintUsage()
 end
+Root = nil
