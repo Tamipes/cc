@@ -105,10 +105,11 @@ function Install(_pname)
     lr.packages[_pname] = Registry.packages[_pname]
     print("Sucessfully installed " .. _pname)
     SaveLocalDatabase(lr)
+    return true
   else
     print("Failed to install " .. _pname)
+    return false
   end
-  return true
 end
 
 ---Deletes the given package
