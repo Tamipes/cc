@@ -55,9 +55,28 @@
     },
     core = {
       files = {
-        startup = {
+        boot = {
           upstream = "packages/boot.lua",
           fs = ".tami/boot.lua"
+        }
+      }
+    },
+    test = {
+      dependencies = {
+        "test_2"
+      },
+      files = {
+        boot = {
+          upstream = "test.lua",
+          fs = "test"
+        }
+      }
+    },
+    test_2 = {
+      files = {
+        boot = {
+          upstream = "test_2.lua",
+          fs = "test_2"
         }
       }
     },
