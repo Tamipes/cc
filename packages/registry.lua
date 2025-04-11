@@ -18,6 +18,18 @@
         }
       }
     },
+    RootFS_lib = {
+      files = {
+        boot = {
+          upstream = "lib/RootFS.lua",
+          fs = ".tami/lib/RootFS"
+        },
+        startup = {
+          upstream = "lib/load_RootFS.lua",
+          fs= ".tami/startups/RootFS_lib.lua"
+        }
+      }
+    },
     download = {
       dependencies = {
         "settings_api"
