@@ -78,6 +78,22 @@ local function downloadFiles(_files, _old_files)
   return success
 end
 
+--- Internal function. Installs the deps for _pname
+---@param _pname string
+---@return boolean
+function InstallDeps(_pname)
+  local package = Registry.packages[_pname]
+  if package.dependencies ~= nil then
+    for i = 1, #package.dependencies do
+      if not Install(package.dependencies[i]) then
+        print("Failed to resolve dependency for: " .. _pname)
+        return false
+      end
+    end
+  end
+  return true
+end
+
 ---Installs the given package
 ---@param _pname string
 ---@return boolean
@@ -89,21 +105,20 @@ function Install(_pname)
     return false
   end
 
-  if package.dependencies ~= nil then
-    for i = 1, #package.dependencies do
-      if not Install(package.dependencies[i]) then
-        print("Failed to resolve dependency for: " .. _pname)
-        return false
-      end
-    end
-  end
+  local success = InstallDeps(_pname)
+  if not success then return false end
 
-  local success = downloadFiles(Registry.packages[_pname].files)
+  success = downloadFiles(Registry.packages[_pname].files)
   if success then
     local lr = LoadLocalDatabase()
     if lr.packages == nil then lr.packages = {} end
     lr.packages[_pname] = Registry.packages[_pname]
     print("Sucessfully installed " .. _pname)
+    if package.files.startup ~= nil then
+      print("Running startup script: ")
+      shell.run(Root:combine(package.files.startup.fs))
+      print("Done!")
+    end
     SaveLocalDatabase(lr)
     return true
   else
@@ -153,14 +168,8 @@ end
 function UpgradeAll()
   local ldb = LoadLocalDatabase()
   for pname, package in pairs(ldb.packages) do
-    local success = false
-    success = downloadFiles(Registry.packages[pname].files, package.files)
-    if success then
-      print("Upgraded: " .. pname)
-      ldb.packages[pname] = Registry.packages[pname]
-    else
-      print("Failed to upgrade: " .. pname)
-    end
+    local success = Upgrade(pname)
+    if not success then return false end
   end
 end
 
@@ -172,12 +181,21 @@ function Upgrade(_pname)
     print("No package named: " .. _pname)
     return false
   end
+
+  success = InstallDeps(_pname)
+  if not success then
+    print("Failed to upgrade: " .. _pname)
+    return false
+  end
+
   success = downloadFiles(Registry.packages[_pname].files, package.files)
   if success then
     print("Upgraded: " .. _pname)
     ldb.packages[_pname] = Registry.packages[_pname]
+    return true
   else
     print("Failed to upgrade: " .. _pname)
+    return false
   end
 end
 
@@ -217,31 +235,6 @@ function UpdateLocalRegistry()
   file.close()
   print("Updated the registry!")
   return true
-end
-
-RootFS = {}
-RootFS.__index = RootFS
-
-function RootFS.new(path)
-  local self = setmetatable({}, RootFS)
-  self.path = path
-  return self
-end
-
-function RootFS:exists(path)
-  return fs.exists(fs.combine(self.path, path))
-end
-
-function RootFS:delete(path)
-  return fs.delete(fs.combine(self.path, path))
-end
-
-function RootFS:open(path, mode)
-  return fs.open(fs.combine(self.path, path), mode)
-end
-
-function RootFS:combine(path)
-  return fs.combine(self.path, path)
 end
 
 for i = 1, #Input do

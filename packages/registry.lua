@@ -90,7 +90,8 @@
     },
     gurl = {
       dependencies = {
-        "download"
+        "download",
+        "RootFS_lib"
       },
       files = {
         bin = {
