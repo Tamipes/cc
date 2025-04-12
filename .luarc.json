@@ -1,5 +1,6 @@
 {
-  "workspace.userThirdParty": "./lua_lsp_addons",
+  "workspace.userThirdParty": [ "./lua_lsp_addons/" ],
+  "workspace.library": [ "./lua_lsp_addons/CC-Tweaked/library" ],
   "diagnostics.severity": {
    "param-type-mismatch": "Error",
    "cast-type-mismatch": "Error",

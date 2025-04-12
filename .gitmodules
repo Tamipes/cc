@@ -1,0 +1,3 @@
+[submodule "lua_lsp_addons/CC-Tweaked"]
+	path = lua_lsp_addons/CC-Tweaked
+	url = https://gitlab.com/carsakiller/cc-tweaked-documentation
