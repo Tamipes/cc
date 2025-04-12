@@ -86,7 +86,10 @@ function InstallDeps(_pname)
   if package.dependencies ~= nil then
     for i = 1, #package.dependencies do
       if not Install(package.dependencies[i]) then
-        print("Failed to resolve dependency for: " .. _pname)
+        term.write("Failed to resolve dependency for: ")
+        term.setTextColor(colors.red)
+        print(_pname)
+        term.setTextColor(colors.white)
         return false
       end
     end
@@ -101,7 +104,7 @@ function Install(_pname)
   ---@type Package
   local package = Registry.packages[_pname]
   if package == nil then
-    print("No package named: " .. _pname)
+    printPackageNotFound(_pname)
     return false
   end
 
@@ -113,16 +116,30 @@ function Install(_pname)
     local lr = LoadLocalDatabase()
     if lr.packages == nil then lr.packages = {} end
     lr.packages[_pname] = Registry.packages[_pname]
-    print("Sucessfully installed " .. _pname)
+
+    term.write("Sucessfully installed: ")
+    term.setTextColor(colors.green)
+    print(_pname)
+    term.setTextColor(colors.white)
+
+
     if package.files.startup ~= nil then
+      term.setTextColor(colors.lightGray)
       print("Running startup script: ")
+      term.setTextColor(colors.gray)
+
       shell.run(Root:combine(package.files.startup.fs))
+
+      term.setTextColor(colors.green)
       print("Done!")
+      term.setTextColor(colors.white)
     end
     SaveLocalDatabase(lr)
     return true
   else
-    print("Failed to install " .. _pname)
+    term.setTextColor(colors.red)
+    print("Failed to install: " .. _pname)
+    term.setTextColor(colors.white)
     return false
   end
 end
@@ -134,7 +151,7 @@ function Delete(_pname)
   local ldb = LoadLocalDatabase()
   local package = ldb.packages[_pname]
   if package == nil then
-    print("Package \"" .. _pname .. "\" not found.")
+    printPackageNotFound(_pname)
     return false
   end
   ---@cast package Package
@@ -178,23 +195,32 @@ function Upgrade(_pname)
   local ldb = LoadLocalDatabase()
   local package = ldb.packages[_pname]
   if package == nil then
-    print("No package named: " .. _pname)
+    printPackageNotFound(_pname)
     return false
   end
 
   success = InstallDeps(_pname)
   if not success then
-    print("Failed to upgrade: " .. _pname)
+    term.write("Failed to upgrade: ")
+    term.setTextColor(colors.red)
+    print(_pname)
+    term.setTextColor(colors.white)
     return false
   end
 
   success = downloadFiles(Registry.packages[_pname].files, package.files)
   if success then
-    print("Upgraded: " .. _pname)
+    term.write("Upgraded: ")
+    term.setTextColor(colors.green)
+    print(_pname)
+    term.setTextColor(colors.white)
     ldb.packages[_pname] = Registry.packages[_pname]
     return true
   else
-    print("Failed to upgrade: " .. _pname)
+    term.write("Failed to upgrade: ")
+    term.setTextColor(colors.red)
+    print(_pname)
+    term.setTextColor(colors.white)
     return false
   end
 end
@@ -235,6 +261,14 @@ function UpdateLocalRegistry()
   file.close()
   print("Updated the registry!")
   return true
+end
+
+function printPackageNotFound(_pname)
+  term.write("No package named: ")
+  term.setTextColor(colors.red)
+  term.write(_pname)
+  term.setTextColor(colors.white)
+  print()
 end
 
 for i = 1, #Input do
