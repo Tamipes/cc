@@ -85,7 +85,7 @@
     },
     astar_lib = {
       files = {
-        startup = {
+        lib = {
           upstream = "packages/lib/astar.lua",
           fs = ".tami/lib/astar"
         }

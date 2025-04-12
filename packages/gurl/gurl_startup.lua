@@ -26,4 +26,4 @@ local function tabCompletionFunction(shell, parNumber, curText, lastText)
   end
   return results
 end
-shell.setCompletionFunction(".tami/bin/gurl", tabCompletionFunction)
+shell.setCompletionFunction(Root:combine(".tami/bin/gurl"), tabCompletionFunction)

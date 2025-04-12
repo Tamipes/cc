@@ -1,2 +1,2 @@
-os.loadAPI(".tami/cc/apis/settings")
+os.loadAPI(Root:combine(".tami/cc/apis/settings"))
 settings.load(".settings")

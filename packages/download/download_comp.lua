@@ -23,4 +23,4 @@ local function tabCompletionFunction(shell, parNumber, curText, lastText)
   end
   return results
 end
-shell.setCompletionFunction(".tami/bin/download", tabCompletionFunction)
+shell.setCompletionFunction(Root:combine(".tami/bin/download"), tabCompletionFunction)

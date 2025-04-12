@@ -23,6 +23,10 @@ function RootFS:list(path)
   return fs.list(fs.combine(self.path, path))
 end
 
-function RootFS:combine(path, ...)
-  return fs.combine(self.path, path, ...)
+function RootFS:combine(...)
+  local path = self.path
+  for _, part in ipairs({ ... }) do
+    path = fs.combine(path, part)
+  end
+  return path
 end
