@@ -19,6 +19,10 @@ function RootFS:open(path, mode)
   return fs.open(fs.combine(self.path, path), mode)
 end
 
+function RootFS:list(path)
+  return fs.list(fs.combine(self.path, path))
+end
+
 function RootFS:combine(path)
   return fs.combine(self.path, path)
 end
