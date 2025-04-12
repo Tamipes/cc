@@ -23,6 +23,6 @@ function RootFS:list(path)
   return fs.list(fs.combine(self.path, path))
 end
 
-function RootFS:combine(path)
-  return fs.combine(self.path, path)
+function RootFS:combine(path, ...)
+  return fs.combine(self.path, path, ...)
 end

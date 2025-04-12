@@ -7,7 +7,7 @@ if Input[1] ~= nil then
   RootFS = RootFS.RootFS
   Root = RootFS.new(Input[1])
 else
-  os.loadAPI(".tami/lib/RootFS")
+  if not os.loadAPI(".tami/lib/RootFS") then print("boot: Failed to *load* RootFS(_lib)") end
   RootFS = RootFS.RootFS
   Root = RootFS.new("/")
 end
@@ -21,6 +21,6 @@ shell.setPath(shell.path() .. ":" .. Root:combine("/.tami/bin/"))
 if Root:exists(".tami/startups/") then
   local files = Root:list(".tami/startups/")
   for i = 1, #files do
-    shell.run(Root:combine(".tami/startups/") .. files[i])
+    shell.run(Root:combine(".tami/startups/", files[i]))
   end
 end
