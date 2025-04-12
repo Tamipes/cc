@@ -10,29 +10,58 @@ local function main()
   Monitor.setTextColor(colors.pink)
   Monitor.setBackgroundColor(colors.pink)
   DrawLineVertical(Monitor, 25, 1, 19)
+  M_width, M_height = Monitor.getSize()
+  DebugWindow = window.create(Monitor, 1, 1, 24, M_height, true)
 
-  parallel.waitForAny(updateScreen, updateData, BigTerminal)
+  local mod = getRednetSide()
+  if mod == nil then return false end
+  rednet.open(mod)
+  parallel.waitForAny(updateScreen, updateData, BigTerminal, Hosting)
+  rednet.unhost("cc.tami.log")
   print("Info: only *one* of them has failed!")
 end
 
 function BigTerminal()
-  local m_width, m_height = Monitor.getSize()
-  w = window.create(Monitor, 1, 1, 24, m_height, true)
-  w.setTextColor(colors.white)
-  w.setBackgroundColor(colors.black)
-  Log(w, "Status running! \n\t(Day: " .. os.day() .. ")")
+  DebugWindow.setTextColor(colors.white)
+  DebugWindow.setBackgroundColor(colors.black)
+  Log("Status running! \n\t(Day: " .. os.day() .. ")")
   while true do
     sleep(999)
   end
 end
 
 ---comment
----@param m ccTweaked.peripherals.Monitor | ccTweaked.Window
+---@return string | nil
+function getRednetSide()
+  rednet.host("cc.tami.log", "status")
+  local sides = { "top", "bottom", "left", "right", "front", "back" }
+  for _, side in pairs(sides) do
+    t = peripheral.wrap(side)
+    if t ~= nil and t.isWireless ~= nil and not t.isWireless() then return side end
+  end
+  return nil
+end
+
+---comment
 ---@param s string
-function Log(m, s)
-  m.write("[" .. textutils.formatTime(os.time(),true) .. "]: " .. s)
-  local x, y = m.getCursorPos()
-  m.setCursorPos(x, y + 1)
+function Log(s)
+  local x, y = DebugWindow.getCursorPos()
+  if y > M_height then
+    DebugWindow.scroll(1)
+    y = y - 1
+    DebugWindow.setCursorPos(1, y)
+  end
+  DebugWindow.write("[" .. textutils.formatTime(os.time(), true) .. "]: " .. s)
+  DebugWindow.setCursorPos(1, y + 1)
+end
+
+function Hosting()
+  while true do
+    local sender, msg, prot = rednet.receive("cc.tami.log")
+    if msg ~= nil then
+      Log(msg.msg)
+    end
+  end
 end
 
 function updateScreen()
