@@ -1,21 +1,47 @@
 local function main()
-  local monitor = peripheral.wrap("monitor_0")
-  ---@cast monitor ccTweaked.peripherals.Monitor
+  ---@type ccTweaked.peripherals.Monitor
+  Monitor = peripheral.wrap("monitor_0") --[[@as ccTweaked.peripherals.Monitor]]
 
-  monitor.setTextColor(colors.white)
-  monitor.setBackgroundColor(colors.black)
-  monitor.clear()
+  Monitor.setTextColor(colors.white)
+  Monitor.setBackgroundColor(colors.black)
+  Monitor.clear()
 
 
-  monitor.setTextColor(colors.pink)
-  monitor.setBackgroundColor(colors.pink)
-  DrawLineVertical(monitor, 24, 1, 19)
+  Monitor.setTextColor(colors.pink)
+  Monitor.setBackgroundColor(colors.pink)
+  DrawLineVertical(Monitor, 25, 1, 19)
+
+  parallel.waitForAny(updateScreen, updateData, BigTerminal)
+  print("Info: only *one* of them has failed!")
+end
+
+function BigTerminal()
+  local m_width, m_height = Monitor.getSize()
+  w = window.create(Monitor, 1, 1, 24, m_height, true)
+  w.setTextColor(colors.white)
+  w.setBackgroundColor(colors.black)
+  Log(w, "Status running! \n\t(Day: " .. os.day() .. ")")
   while true do
-    drawReactors(monitor)
-    monitor.setTextColor(colors.green)
-    monitor.setBackgroundColor(colors.black)
-    monitor.setCursorPos(30, 10)
-    monitor.write(tostring(Data.sum))
+    sleep(999)
+  end
+end
+
+---comment
+---@param m ccTweaked.peripherals.Monitor | ccTweaked.Window
+---@param s string
+function Log(m, s)
+  m.write("[" .. textutils.formatTime(os.time(),true) .. "]: " .. s)
+  local x, y = m.getCursorPos()
+  m.setCursorPos(x, y + 1)
+end
+
+function updateScreen()
+  while true do
+    drawReactors(Monitor)
+    Monitor.setTextColor(colors.green)
+    Monitor.setBackgroundColor(colors.black)
+    Monitor.setCursorPos(30, 10)
+    Monitor.write(tostring(Data.sum))
     sleep(0.1)
   end
 end
@@ -157,5 +183,4 @@ function drawReactor(_term, _x, _y, _p, _gen)
   end
 end
 
-parallel.waitForAny(main, updateData)
-print("Info: Program did not crash *fully*!")
+main()

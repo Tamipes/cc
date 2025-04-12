@@ -21,11 +21,11 @@
     RootFS_lib = {
       files = {
         boot = {
-          upstream = "lib/RootFS.lua",
+          upstream = "packages/lib/RootFS.lua",
           fs = ".tami/lib/RootFS"
         },
         startup = {
-          upstream = "lib/load_RootFS.lua",
+          upstream = "packages/lib/load_RootFS.lua",
           fs= ".tami/startups/RootFS_lib.lua"
         }
       }
@@ -36,11 +36,11 @@
       },
       files = {
         bin = {
-          upstream = "pastebin/download.lua",
+          upstream = "packages/download/download.lua",
           fs = ".tami/bin/download"
         },
         comp = {
-          upstream = "pastebin/download_comp.lua",
+          upstream = "packages/download/download_comp.lua",
           fs = ".tami/startups/download.lua"
         }
       }
@@ -48,15 +48,18 @@
     status = {
       files = {
         bin = {
-          upstream = "mainframe/status.lua",
+          upstream = "packages/mainframe/status.lua",
           fs = ".tami/bin/status"
         }
       }
     },
     core = {
+      dependencies = {
+        "RootFS_lib"
+      },
       files = {
         boot = {
-          upstream = "packages/boot.lua",
+          upstream = "boot.lua",
           fs = ".tami/boot.lua"
         }
       }
@@ -67,7 +70,7 @@
       },
       files = {
         boot = {
-          upstream = "test.lua",
+          upstream = "packages/test/test.lua",
           fs = "test"
         }
       }
@@ -75,7 +78,7 @@
     test_2 = {
       files = {
         boot = {
-          upstream = "test_2.lua",
+          upstream = "packages/test/test_2.lua",
           fs = "test_2"
         }
       }
@@ -83,7 +86,7 @@
     astar_lib = {
       files = {
         startup = {
-          upstream = "lib/astar.lua",
+          upstream = "packages/lib/astar.lua",
           fs = ".tami/lib/astar"
         }
       }
@@ -95,11 +98,11 @@
       },
       files = {
         bin = {
-          upstream = "packages/gurl.lua",
+          upstream = "packages/gurl/gurl.lua",
           fs = ".tami/bin/gurl"
         },
         startup = {
-          upstream = "packages/gurl_startup.lua",
+          upstream = "packages/gurl/gurl_startup.lua",
           fs = ".tami/startups/gurl.lua"
         }
       }
