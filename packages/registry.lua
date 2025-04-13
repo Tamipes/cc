@@ -14,7 +14,7 @@
         },
         startup = {
           upstream = "cc_extensions/settings_startup.lua",
-          fs = ".tami/startups/settings_api.lua"
+          fs = ".tami/startups/001-settings_api.lua"
         }
       }
     },
@@ -26,7 +26,7 @@
         },
         startup = {
           upstream = "packages/lib/load_RootFS.lua",
-          fs= ".tami/startups/RootFS_lib.lua"
+          fs= ".tami/startups/000-RootFS_lib.lua"
         }
       }
     },
@@ -39,9 +39,9 @@
           upstream = "packages/download/download.lua",
           fs = ".tami/bin/download"
         },
-        comp = {
+        startup = {
           upstream = "packages/download/download_comp.lua",
-          fs = ".tami/startups/download.lua"
+          fs = ".tami/startups/001-download.lua"
         }
       }
     },
@@ -103,7 +103,7 @@
         },
         startup = {
           upstream = "packages/gurl/gurl_startup.lua",
-          fs = ".tami/startups/gurl.lua"
+          fs = ".tami/startups/050-gurl.lua"
         }
       }
     }
