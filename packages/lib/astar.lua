@@ -3,33 +3,36 @@ function Main()
   local width, height = term.getSize()
   local m = {}
   for x = 1, width do
+    m[x] = {}
     m[x][0] = {}
     for z = 1, height do
       m[x][0][z] = { block = "minecraft:air" }
       term.setCursorPos(x, z)
     end
   end
-  local event, button, x, y = os.pullEvent("mouse_click")
-  ColorPixel(x, y, colors.green)
-  local s = { x = x, y = y }
-  local event, button, x, y = os.pullEvent("mouse_click")
-  local g = { x = x, y = y }
-  ColorPixel(x, y, colors.red)
+  local _, _, x, z = os.pullEvent("mouse_click")
+  ColorPixel(x, z, colors.green)
+  local s = { x = x, y = 0, z = z }
+  local _, _, x, z = os.pullEvent("mouse_click")
+  local g = { x = x, y = 0, z = z }
+  term.setCursorPos(x, z)
+  term.blit("x", "6", "7")
+  -- ColorPixel(x, z, colors.red)
 
   while true do
     term.setCursorPos(1, 1)
-    term.blit("x", "6", "8")
-    local event, button, x, y = os.pullEvent("mouse_click")
-    if x == 1 and y == 1 then break end
-    ColorPixel(x, y, colors.gray)
-    m[x][y].block = "minecraft:stone"
+    term.blit("x", "6", "7")
+    local event, button, x, z = os.pullEvent("mouse_click")
+    if x == 1 and z == 1 then break end
+    ColorPixel(x, z, colors.gray)
+    m[x][0][z].block = "minecraft:stone"
   end
 
   term.setCursorPos(1, 1)
   local node, errnum = Astar(m, s, g)
   if node == false then
     term.setCursorPos(1, height - 1)
-    print(errnum .. "Error in calculation!: " .. s.x .. ", " .. s.y)
+    print(errnum .. ": Could not find route!: " .. s.x .. ", " .. s.y)
   else
     DrawPath(node)
     term.setCursorPos(1, 1)
@@ -52,9 +55,17 @@ end
 
 function DrawPath(node)
   local curr = node
+  local n = 2
   while curr.prev ~= nil do
     curr = curr.prev
-    ColorPixel(curr.x, curr.y, colors.yellow)
+    term.setCursorPos(1, n)
+    -- print(tostring(curr.y) .. ", " .. tostring(curr.block))
+    n = n + 1
+    if curr.y == 0 then
+      ColorPixel(curr.x, curr.z, colors.yellow)
+    else
+      ColorPixel(curr.x, curr.z, colors.red)
+    end
   end
 end
 
@@ -86,46 +97,46 @@ function Astar(m, start, goal)
   while #openSet ~= 0 do
     local current = returnLowesFscore(openSet)
     -- term.setCursorPos(1, 1)
-    -- term.write("num: "..#openSet.."; "..tostring(current) .. ": " .. current.x .. ", " .. current.y)
+    -- term.write("num: " ..
+    --   #openSet .. "; " .. tostring(current) .. ": " .. current.x .. ", " .. current.y .. ", " .. current.z)
 
     -- sleep(5)
     if current.x == goal.x and current.y == goal.y and current.z == goal.z then return current end
     max = math.max(max, #openSet)
-    if m[current.x] == nil or m[current.x][current.y] == nil then
-      term.setCursorPos(1, 1)
-      print("noooooooooooooooooooooooope")
-    else
-      if m[current.x][current.y][current.z].block ~= "minecraft:air" then
-        ColorPixel(current.x, current.y, colors.gray)
-      else
-        ColorPixel(current.x, current.y, "0")
+    if m[current.x] == nil or m[current.x][current.y] == nil or m[current.x][current.y][current.z] == nil or m[current.x][current.y][current.z].block == "minecraft:air" then
+      -- if current.y == 0 then ColorPixel(current.x, current.z, "0") end
 
-        for key, neighbor in pairs(GetNeighbors(current)) do
-          local tentative_gscore = current.gscore + 1
+      for key, neighbor in pairs(GetNeighbors(current)) do
+        -- term.setCursorPos(1, 3)
+        -- sleep(1)
+        -- print(key)
+        local tentative_gscore = current.gscore + 1
 
-          if tentative_gscore < ((gScore[neighbor.x] and gScore[neighbor.x][neighbor.y]) or math.huge) then
-            neighbor.prev = current
+        if tentative_gscore < ((gScore[neighbor.x] and gScore[neighbor.x][neighbor.y] and gScore[neighbor.x][neighbor.y][neighbor.z]) or math.huge) then
+          neighbor.prev = current
 
-            ---@diagnostic disable-next-line: inject-field
-            neighbor.gscore = tentative_gscore
-            if gScore[neighbor.x] == nil then gScore[neighbor.x] = {} end
-            if gScore[neighbor.x][neighbor.y] == nil then gScore[neighbor.x][neighbor.y] = {} end
-            gScore[neighbor.x][neighbor.y][neighbor.z] = tentative_gscore
+          ---@diagnostic disable-next-line: inject-field
+          neighbor.gscore = tentative_gscore
+          if gScore[neighbor.x] == nil then gScore[neighbor.x] = {} end
+          if gScore[neighbor.x][neighbor.y] == nil then gScore[neighbor.x][neighbor.y] = {} end
+          gScore[neighbor.x][neighbor.y][neighbor.z] = tentative_gscore
 
-            ---@diagnostic disable-next-line: inject-field
-            neighbor.fscore = tentative_gscore + H_dist(neighbor, goal)
+          ---@diagnostic disable-next-line: inject-field
+          neighbor.fscore = tentative_gscore + H_dist(neighbor, goal)
 
-            local doAdd = true
-            for _, val in pairs(openSet) do
-              if val.x == neighbor.x and val.y == neighbor.y and val.z == neighbor.z then
-                doAdd = false
-                break
-              end
+          local doAdd = true
+          for _, val in pairs(openSet) do
+            if val.x == neighbor.x and val.y == neighbor.y and val.z == neighbor.z then
+              doAdd = false
+              break
             end
-            if doAdd then
-              ColorPixel(neighbor.x, neighbor.y, "d")
-              table.insert(openSet, neighbor)
+          end
+          if doAdd then
+            if neighbor.y == 0 then
+              neighbor.block = m[neighbor.x][0][neighbor.z].block
+              -- ColorPixel(neighbor.x, neighbor.z, "d")
             end
+            table.insert(openSet, neighbor)
           end
         end
       end
@@ -161,22 +172,19 @@ end
 function GetNeighbors(cord)
   ---@type { [integer]: {x: integer, y: integer, z: integer } }
   local que = {}
-  for x = -1, 1 do
-    for y = -1, 1 do
-      for z = -1, 1 do
-        if x == 0 and y == 0 and z == 0 then else
-          table.insert(que, { x = cord.x + x, y = cord.y + y, z = cord.z + z, })
-        end
-      end
-    end
-  end
+  table.insert(que, { x = cord.x + 1, y = cord.y + 0, z = cord.z + 0, })
+  table.insert(que, { x = cord.x - 1, y = cord.y + 0, z = cord.z + 0, })
+  table.insert(que, { x = cord.x + 0, y = cord.y + 1, z = cord.z + 0, })
+  table.insert(que, { x = cord.x + 0, y = cord.y - 1, z = cord.z + 0, })
+  table.insert(que, { x = cord.x + 0, y = cord.y + 0, z = cord.z + 1, })
+  table.insert(que, { x = cord.x + 0, y = cord.y + 0, z = cord.z - 1, })
   return que
 end
 
 ---Manhattan distance
 ---@return integer
 function H_dist(from, to)
-  return math.abs(from.x - to.x) + math.abs(from.y - to.y)
+  return math.abs(from.x - to.x) + math.abs(from.y - to.y) + math.abs(from.z - to.z)
 end
 
 ---Euclidean distance
@@ -184,7 +192,8 @@ end
 function H_dist_euc(from, to)
   local _x = from.x - to.x
   local _y = from.y - to.y
-  return math.sqrt(_x * _x + _y * _y)
+  local _z = from.z - to.z
+  return math.sqrt(_x * _x + _y * _y + _z * _z)
 end
 
 Main()
