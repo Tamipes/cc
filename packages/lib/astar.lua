@@ -1,12 +1,12 @@
-function main()
+function Main()
   term.clear()
   local width, height = term.getSize()
   local m = {}
   for x = 1, width do
-    m[x] = { type = "air" }
-    for y = 1, height do
-      m[x][y] = { block = "minecraft:air" }
-      term.setCursorPos(x, y)
+    m[x][0] = {}
+    for z = 1, height do
+      m[x][0][z] = { block = "minecraft:air" }
+      term.setCursorPos(x, z)
     end
   end
   local event, button, x, y = os.pullEvent("mouse_click")
@@ -26,10 +26,10 @@ function main()
   end
 
   term.setCursorPos(1, 1)
-  local node ,errnum = Astar(m, s, g)
+  local node, errnum = Astar(m, s, g)
   if node == false then
     term.setCursorPos(1, height - 1)
-    print(errnum.."Error in calculation!: " .. s.x .. ", " .. s.y)
+    print(errnum .. "Error in calculation!: " .. s.x .. ", " .. s.y)
   else
     DrawPath(node)
     term.setCursorPos(1, 1)
@@ -58,16 +58,29 @@ function DrawPath(node)
   end
 end
 
+---@alias bl { block: string, x: integer, y: integer, z: integer }
+---@alias blid { block: string, x: integer, y: integer, z: integer, fscore: integer, gscore: integer}
+
 ---A* pathfinding algorithm
+---comment
+---@param m { [integer]: { [integer]: { [integer]: { block: string } } } }
+---@param start bl
+---@param goal bl
+---@return nil
+---@return integer | nil
 function Astar(m, start, goal)
   if m == nil or start == nil or goal == nil then return nil end
+  ---@type { [integer]: { [integer]: { [integer]: integer } } }
   local gScore = {}
+  ---@type { [integer]: blid}
   local openSet = {}
+  ---@cast start blid
   start.gscore = 0
   start.fscore = 0
   table.insert(openSet, start)
   gScore[start.x] = {}
-  gScore[start.x][start.y] = 0
+  gScore[start.x][start.y] = {}
+  gScore[start.x][start.y][start.z] = 0
 
   local max = 0
   while #openSet ~= 0 do
@@ -76,13 +89,13 @@ function Astar(m, start, goal)
     -- term.write("num: "..#openSet.."; "..tostring(current) .. ": " .. current.x .. ", " .. current.y)
 
     -- sleep(5)
-    if current.x == goal.x and current.y == goal.y then return current end
+    if current.x == goal.x and current.y == goal.y and current.z == goal.z then return current end
     max = math.max(max, #openSet)
     if m[current.x] == nil or m[current.x][current.y] == nil then
       term.setCursorPos(1, 1)
       print("noooooooooooooooooooooooope")
     else
-      if m[current.x][current.y].block ~= "minecraft:air" then
+      if m[current.x][current.y][current.z].block ~= "minecraft:air" then
         ColorPixel(current.x, current.y, colors.gray)
       else
         ColorPixel(current.x, current.y, "0")
@@ -93,15 +106,18 @@ function Astar(m, start, goal)
           if tentative_gscore < ((gScore[neighbor.x] and gScore[neighbor.x][neighbor.y]) or math.huge) then
             neighbor.prev = current
 
+            ---@diagnostic disable-next-line: inject-field
             neighbor.gscore = tentative_gscore
             if gScore[neighbor.x] == nil then gScore[neighbor.x] = {} end
-            gScore[neighbor.x][neighbor.y] = tentative_gscore
+            if gScore[neighbor.x][neighbor.y] == nil then gScore[neighbor.x][neighbor.y] = {} end
+            gScore[neighbor.x][neighbor.y][neighbor.z] = tentative_gscore
 
+            ---@diagnostic disable-next-line: inject-field
             neighbor.fscore = tentative_gscore + H_dist(neighbor, goal)
 
             local doAdd = true
-            for key, val in pairs(openSet) do
-              if val.x == neighbor.x and val.y == neighbor.y then
+            for _, val in pairs(openSet) do
+              if val.x == neighbor.x and val.y == neighbor.y and val.z == neighbor.z then
                 doAdd = false
                 break
               end
@@ -118,6 +134,9 @@ function Astar(m, start, goal)
   return false, max
 end
 
+---comment
+---@param tab { [integer]: blid }
+---@return blid
 function returnLowesFscore(tab)
   local lowest
   local key_low
@@ -132,17 +151,25 @@ function returnLowesFscore(tab)
     end
   end
   -- tab[key_low] = nil
-  table.remove(tab,key_low)
+  table.remove(tab, key_low)
   return lowest
 end
 
+---comment
+---@param cord blid
+---@return { [integer]: { x: integer, y: integer, z: integer } }
 function GetNeighbors(cord)
+  ---@type { [integer]: {x: integer, y: integer, z: integer } }
   local que = {}
-  -- table.insert(que, { x = cord.x, y = cord.y })
-  table.insert(que, { x = cord.x + 1, y = cord.y })
-  table.insert(que, { x = cord.x, y = cord.y + 1 })
-  table.insert(que, { x = cord.x - 1, y = cord.y })
-  table.insert(que, { x = cord.x, y = cord.y - 1 })
+  for x = -1, 1 do
+    for y = -1, 1 do
+      for z = -1, 1 do
+        if x == 0 and y == 0 and z == 0 then else
+          table.insert(que, { x = cord.x + x, y = cord.y + y, z = cord.z + z, })
+        end
+      end
+    end
+  end
   return que
 end
 
@@ -160,4 +187,4 @@ function H_dist_euc(from, to)
   return math.sqrt(_x * _x + _y * _y)
 end
 
-main()
+Main()
