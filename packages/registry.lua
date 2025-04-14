@@ -45,6 +45,27 @@
         }
       }
     },
+    phone = {
+      files = {
+        upstream = "packages/phone/main.lua",
+        fs = ".tami/bin/phone"
+      }
+    },
+    swarm_mother = {
+      dependencies = {
+        "astar_lib"
+      },
+      files = {
+        bin = {
+          upstream = "packages/swarm_mother/main.lua",
+          fs = ".tami/bin/swarm_mother"
+        },
+        startup = {
+          upstream = "packages/swarm_mother/startup.lua",
+          fs = ".tami/startups/050-swarm_mother.lua"
+        }
+      }
+    },
     status = {
       files = {
         bin = {

@@ -76,9 +76,9 @@ end
 ---comment
 ---@param m { [integer]: { [integer]: { [integer]: { block: string } } } }
 ---@param start bl
----@param goal bl
+---@param goal { x: integer, y: integer, z: integer }
 ---@return nil
----@return integer | nil
+---@return nil | { x: integer, y: integer: z: integer, prev: any | nil }
 function Astar(m, start, goal)
   if m == nil or start == nil or goal == nil then return nil end
   ---@type { [integer]: { [integer]: { [integer]: integer } } }
